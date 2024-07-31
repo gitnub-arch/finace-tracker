@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { collection, onSnapshot, query } from "firebase/firestore";
 import { db } from "../firebase/config";
 
@@ -6,20 +6,24 @@ export const useCollection = (collectionName, _query, _order) => {
   const [documents, setDocuments] = useState(null);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  let unsub;
+
+  const queryRef = useRef(_query).current;
+  const orderRef = useRef(_order).current;
+
+  const fetchCollection = ({fetchQuery, fetchOrder}) => {
+    setDocuments(null);
     let ref = collection(db, collectionName);
 
-    // Apply query constraints if provided
-    if (_query) {
-      ref = query(ref, _query); // Фильтрация
+    if (queryRef) {
+      ref = query(ref,fetchQuery ?? queryRef); // Фильтрация
     }
 
-    // Apply ordering constraints if provided
-    if (_order) {
-      ref = query(ref, _order); // Отсортируй по полю createdAt
+    if (orderRef) {
+      ref = query(ref, fetchOrder ?? orderRef); // Отсортируй по полю createdAt
     }
 
-    onSnapshot(ref, (snapshot) => {
+     unsub = onSnapshot(ref, (snapshot) => {
       let results = [];
 
       snapshot.docs.forEach((doc) => {
@@ -29,7 +33,14 @@ export const useCollection = (collectionName, _query, _order) => {
       setDocuments(results);
       setError(null);
     });
-  }, [collectionName,  _query, _order]);
+  };
 
-  return { documents, error };
+  useEffect(() => {
+    fetchCollection({});
+    return () => {
+      unsub?.();
+    }
+  }, [collectionName,  queryRef, orderRef]);
+
+  return { documents, error, fetchCollection };
 };
