@@ -9,6 +9,7 @@ import { orderBy, where } from "firebase/firestore";
 const Home = () => {
   const [filter, setFilter] = useState("7days");
   const [sortOrder, setSortOrder] = useState("asc");
+
   const { user } = useContext(AuthContext);
   const { documents, error, fetchCollection } = useCollection(
     "transactions",
@@ -16,7 +17,7 @@ const Home = () => {
     orderBy("createdAt", sortOrder)
   );
 
-  const handlSort = (sortType) => {
+  const handleSort = (sortType) => {
     setSortOrder(sortType);
     fetchCollection({
       fetchQuery: orderBy("createdAt", sortType),
@@ -24,18 +25,44 @@ const Home = () => {
     });
   };
 
+  const handleFilter = (filterType) => {
+    const now = new Date();
+    let startDate;
+
+    switch (filterType) {
+      case "1day":
+        startDate = new Date(now.setDate(now.getDate() - 1));
+        break;
+      case "7days":
+        startDate = new Date(now.setDate(now.getDate() - 7));
+        break;
+      case "1month":
+        startDate = new Date(now.setMonth(now.getMonth() - 1));
+        break;
+    
+    }
+
+    fetchCollection({
+      fetchQuery: [
+        where("createdAt", ">=", startDate),
+        orderBy("createdAt", filterType),
+      ],
+    });
+  };
+
+
   return (
     <div className={styles.container}>
       <div>
         <div className={styles["transactions-actions"]}>
           <ul className={styles.filter}>
-            <li>за 1 день</li>
-            <li>за 7 дней</li>
-            <li>за 1 месяц</li>
+            <li onClick={() => handleFilter("1day")}>За 1 день</li>
+            <li onClick={() => handleFilter("7days")}>За 7 дней</li>
+            <li onClick={() => handleFilter("1month")}>За 1 месяц</li>
           </ul>
           <ul className={styles.sort}>
-            <li onClick={() => handlSort("desc")}>новые</li>
-            <li onClick={() => handlSort("asc")}>старые</li>
+            <li onClick={() => handleSort("desc")}>Новые</li>
+            <li onClick={() => handleSort("asc")}>Старые</li>
           </ul>
         </div>
         <div className={styles.content}>
