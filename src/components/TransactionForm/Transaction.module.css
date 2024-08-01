@@ -37,3 +37,10 @@
     font-size: 0.9em;
     cursor: pointer;
 }
+
+
+.transactions {
+    list-style: none;
+    padding: 0;
+  }
+  

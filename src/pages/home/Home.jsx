@@ -6,15 +6,16 @@ import { useCollection } from "../../hooks/useCollection";
 import { AuthContext } from "../../context/AuthContext";
 import { orderBy, where } from "firebase/firestore";
 
+
 const Home = () => {
-  const [filter, setFilter] = useState("7days");
+  const [filterType, setFilterType] = useState("7days");
   const [sortOrder, setSortOrder] = useState("asc");
 
   const { user } = useContext(AuthContext);
   const { documents, error, fetchCollection } = useCollection(
     "transactions",
     where("userId", "==", user.uid),
-    orderBy("createdAt", sortOrder)
+    orderBy("createdAt", sortOrder, filterType)
   );
 
   const handleSort = (sortType) => {
@@ -25,10 +26,12 @@ const Home = () => {
     });
   };
 
+
+
   const handleFilter = (filterType) => {
     const now = new Date();
     let startDate;
-
+    
     switch (filterType) {
       case "1day":
         startDate = new Date(now.setDate(now.getDate() - 1));
@@ -38,18 +41,14 @@ const Home = () => {
         break;
       case "1month":
         startDate = new Date(now.setMonth(now.getMonth() - 1));
-        break;
-    
     }
 
     fetchCollection({
-      fetchQuery: [
-        where("createdAt", ">=", startDate),
-        orderBy("createdAt", filterType),
-      ],
+      fetchQuery: orderBy("createdAt", ">=", startDate),
+      fetchOrder: where("createdAt", "==", filterType),
     });
+    console.log(startDate);
   };
-
 
   return (
     <div className={styles.container}>
